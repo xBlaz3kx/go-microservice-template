@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Service
+  description: Service
+  version: 1.0.0
+servers:
+  - url: 'https'
+paths:
+  /healthz:
+    description: Healthcheck endpoint
+    get:
+      responses:
+        200:
+          description: Healthy

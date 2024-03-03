@@ -1,0 +1,47 @@
+name: "Documentation"
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'api/**'
+    types: [ opened, synchronize ]
+  workflow_dispatch:
+
+jobs:
+  generate-specification:
+    name: "Generate OpenAPI specification"
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/goswagger/swagger
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Add latest version of wget
+        run: |
+          apk add wget
+
+      - name: Generate OpenAPI specification
+        run: |
+          make gen-core-spec
+
+      - name: Push the specification
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "[Gen] Generated OpenAPI specification"
+
+  validate-specification:
+    name: "Validate the OpenAPI specification"
+    runs-on: ubuntu-latest
+    needs: generate-specification
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Swagger Editor Validator
+        uses: char0n/swagger-editor-validate@v1.3.2
+        with:
+          definition-file: ./api/spectre.core.openapi.yaml
+

@@ -1,0 +1,7 @@
+#config/
+.idea
+
+.secrets
+
+.DS_Store
+.golangci.yml

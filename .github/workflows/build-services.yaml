@@ -1,0 +1,40 @@
+name: "Build service"
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '.run/**'
+      - 'api/**'
+      - 'features/**'
+      - 'config/**'
+      - 'deployments/**'
+      - '*.md'
+    tags:
+      - v*
+  pull_request:
+    types: [ opened, synchronize ]
+    paths-ignore:
+      - 'docs/**'
+      - '.run/**'
+      - 'api/**'
+      - 'features/**'
+      - 'config/**'
+      - 'deployments/**'
+      - '*.md'
+  workflow_dispatch:
+
+jobs:
+  build-service:
+    name: "Build and Push service"
+    uses: ./.github/workflows/build.yaml
+    needs:
+      - generate-mocks
+    with:
+      service: user
+      push: ${{ github.event_name != 'pull_request' }}
+      ecr_repository: service
+      dockerfile: "./build/Dockerfile"
+    secrets: inherit
+

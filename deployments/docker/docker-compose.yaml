@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  service:
+    container_name: "service"
+    restart: on-failure
+    image: "service:latest"
+    build:
+      context: ../..
+      dockerfile: ./build/service/Dockerfile
+      target: app
+    environment:
+      - SERVICE_ENV=dev
+      - SERVICE_DEBUG=true
+    healthcheck:
+      test: curl --fail http://localhost:80/healthz || exit 1
+      start_period: 10s
+      interval: 10s
+      retries: 3
+      timeout: 5s
+
+    volumes:
+      - ../../config/service.config.yaml:/usr/service/config/config.yaml
