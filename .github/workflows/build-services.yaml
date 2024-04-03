@@ -1,4 +1,4 @@
-name: "Build service"
+name: "Build and Push service"
 on:
   push:
     branches:
@@ -13,8 +13,11 @@ on:
       - '*.md'
     tags:
       - v*
+
   pull_request:
     types: [ opened, synchronize ]
+    branches:
+      - master
     paths-ignore:
       - 'docs/**'
       - '.run/**'
@@ -29,12 +32,10 @@ jobs:
   build-service:
     name: "Build and Push service"
     uses: ./.github/workflows/build.yaml
-    needs:
-      - generate-mocks
     with:
       service: user
       push: ${{ github.event_name != 'pull_request' }}
-      ecr_repository: service
+      docker_repository: service
       dockerfile: "./build/Dockerfile"
     secrets: inherit
 
