@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ~1.3
 
@@ -61,7 +61,7 @@ jobs:
           # TF_WORKSPACE: production
           # TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         env:
           PLAN_STAGING: "terraform\n${{ steps.plan-staging.outputs.stdout }}"
           PLAN_PROD: "terraform\n${{ steps.plan-prod.outputs.stdout }}"
