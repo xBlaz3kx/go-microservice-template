@@ -1,5 +1,11 @@
-FROM golang:1.19 as build
+FROM golang:1.21 as build
+
 WORKDIR /app/src
+
+# Add the GitHub access token to the git config for private repositories
+ARG GH_ACCESS_TOKEN
+RUN apk add --no-cache git
+RUN git config --global url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf https://github.com/
 
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
@@ -25,7 +31,7 @@ FROM build as debug
 
 COPY --from=build /app/src /service/src
 
-WORKDIR /ocpp-service/src
+WORKDIR /service/src
 
 # Build Delve
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
@@ -51,14 +57,15 @@ RUN adduser \
     --ingroup $group \
     $user
 
-RUN mkdir /var/log/glcharge
-RUN chown $user /var/log/glcharge/
-
 COPY --chown=$user:$group --from=build /app/service /usr/local/bin/service
 
 RUN chmod +x /usr/local/bin/service
 
 USER $user
 WORKDIR /usr/local/service
+
+# Todo add health check
+
+# Todo expose port
 
 CMD ["/usr/local/bin/service"]
