@@ -1,0 +1,55 @@
+name: Lint
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.run/**'
+      - '.vscode/**'
+      - 'config/**'
+      - 'assets/**'
+
+  pull_request:
+    types: [ opened, synchronize ]
+    paths-ignore:
+      - '.run/**'
+      - '.vscode/**'
+      - 'config/**'
+      - 'assets/**'
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.1
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59
+          args: --timeout=3m
+
+  buf:
+    name: Run buf
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          github_token: ${{ github.token }}
