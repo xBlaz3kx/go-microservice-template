@@ -1,0 +1,96 @@
+name: Autogen
+on:
+  push:
+    paths:
+      - '**/*.go'
+      - '.mockery.yaml'
+    branches:
+      - master
+      - main
+
+  pull_request:
+    types: [ opened, synchronize ]
+    branches:
+      - master
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  generate_openapi_spec:
+    name: "Generate OpenAPI specification"
+    runs-on: ubuntu-latest
+
+    # Permissions are needed to push the changes back to the repository
+    permissions:
+      contents: write
+
+    if: github.path == 'internal/adapters/http/**'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install go-swagger
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with: # Grab a specific tag
+          repo: go-swagger/go-swagger
+          tag: v0.31.0
+
+      - name: Add latest version of wget
+        run: |
+          apk add wget
+
+      - name: Generate OpenAPI specification
+        run: |
+          make gen-spec
+
+      - name: Validate the specification
+        uses: char0n/swagger-editor-validate@v1.4.0
+        with:
+          definition-file: ./api/chargex.em.openapi.yaml
+
+      - name: Push the specification
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "[Autogen] Generated OpenAPI specification"
+
+  mockery:
+    name: Generate mocks
+    runs-on: ubuntu-latest
+
+    # Permissions are needed to push the changes back to the repository
+    permissions:
+      contents: write
+
+    if: (github.path == '**/*.go' || github.path == '.mockery.yaml') && github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Install Mockery
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with: # Grab a specific tag
+          repo: vektra/mockery
+          tag: v2.51.0
+
+      - name: Generate mocks
+        run: mockery
+
+        # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        #with:
+        #  commit_message: [ Autogen ] Generated mocks
+        #  # Mockery can generate new files, so we need to add them to the commit as well
+        #  add_options: '$(git ls-files -o --exclude-standard)'
+        #  file_pattern: '*.go' # Only commit changes to Go files
+        #  # Only create a branch when the workflow is triggered manually
+        #  create_branch: ${{ github.event_name == 'workflow_dispatch' }}
