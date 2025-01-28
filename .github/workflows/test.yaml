@@ -29,31 +29,28 @@ on:
 
   workflow_dispatch:
 
+name: "Test services"
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '.run/**'
+      - '.vscode/**'
+      - 'api/**'
+      - 'features/**'
+      - 'config/**'
+      - 'deployments/**'
+      - 'scripts/**'
+      - 'assets/**'
+      - '*.md'
+  workflow_dispatch:
+
 jobs:
-
-  # Generate mocks
-  generate-mocks:
-    name: "Generate mocks"
-    runs-on: ubuntu-latest
-    container: vektra/mockery:v2.38.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Generate mocks
-        run: |
-          mockery --all
-
-      - name: Commit mocks
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "[Gen] Generated mocks"
-
-  # Run unit tests
-  tests:
+  unit:
     name: "Run unit tests"
-    needs:
-      - generate-mocks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -62,9 +59,27 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.1
+          go-version: 1.22.1
+
+        # todo skip mocks coverage
+      - name: Install dependencies and run tests
+        run: |
+          go mod download
+          go test -v ./... -coverpkg=./... -short -coverprofile=unit_coverage.out
+
+  integration:
+    name: "Run integration tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.1
 
       - name: Install dependencies and run tests
         run: |
           go mod download
-          go test -v ./...
+          go test -v -run 'Integration$' ./... -coverpkg=./... -coverprofile=integration_coverage.out
