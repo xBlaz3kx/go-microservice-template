@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  unit_test:
+    image: golang:1.25-alpine
+    working_dir: /etc/app
+    volumes:
+      - .:/etc/app:rw
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        set -o pipefail
+        go test -race -covermode=atomic -v -short -covermode=count -coverprofile=unit_coverage.out ./...
+
+
+  benchmarks:
+    # The tests might require permissions to write to coverage out files.
+    # If you encounter issues with permissions, you can try running the container as root.
+    user: root
+    image: golang:1.25-alpine
+    working_dir: /etc/app
+    volumes:
+      - .:/etc/app:rw
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        set -o pipefail
+        touch benchmarks.txt
+        go test -bench=. -benchmem ./... -cpu=1,2,4 | tee -a benchmarks.txt
+
+  integration_test:
+    image: golang:1.25-alpine
+    # The tests might require permissions to write to coverage out files.
+    # If you encounter issues with permissions, you can try running the container as root.
+    user: root
+    working_dir: /etc/app
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        set -o pipefail
+        go test -v -race -covermode=atomic -run 'Integration$' ./... -coverpkg=./... -coverprofile=integration_coverage.out
+    volumes:
+      - .:/etc/app

@@ -1,34 +1,3 @@
-name: "Test service"
-on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - 'docs/**'
-      - '.run/**'
-      - 'api/**'
-      - 'features/**'
-      - 'config/**'
-      - 'deployments/**'
-      - '*.md'
-    tags:
-      - v*
-
-  pull_request:
-    types: [ opened, synchronize ]
-    branches:
-      - master
-    paths-ignore:
-      - 'docs/**'
-      - '.run/**'
-      - 'api/**'
-      - 'features/**'
-      - 'config/**'
-      - 'deployments/**'
-      - '*.md'
-
-  workflow_dispatch:
-
 name: "Test services"
 on:
   pull_request:
@@ -65,7 +34,7 @@ jobs:
       - name: Install dependencies and run tests
         run: |
           go mod download
-          go test -v ./... -coverpkg=./... -short -coverprofile=unit_coverage.out
+          make unit-tests
 
   integration:
     name: "Run integration tests"
@@ -81,5 +50,4 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          go mod download
-          go test -v -run 'Integration$' ./... -coverpkg=./... -coverprofile=integration_coverage.out
+          make integration-tests
